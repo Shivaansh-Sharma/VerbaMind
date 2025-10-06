@@ -7,6 +7,7 @@
   --color-P1: #00b441;       /* Viper Green */
   --color-P2: #4169E1;       /* Royal Blue */
   --color-P3: #0047AB;       /* Cobalt Blue */
+  --color-Text-Inverse: #E4E5E7;
 }
 
 /* When `.dark` class is on root (html), override variables */
@@ -16,6 +17,7 @@
   --color-P1: #E1BC6D;        /* Sand Golden */
   --color-P2: #9966cc;        /* Amethyst */
   --color-P3: #f4bbff;        /* Electric Lavender */
+  --color-Text-Inverse: #353935;
 }
 
 /* Light Mode (default) */

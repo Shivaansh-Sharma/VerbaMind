@@ -42,7 +42,7 @@ export default function Textbox(): ReactElement {
         className="self-center px-6 py-2 rounded-xl transition btn-primary"
         style={{
           backgroundColor: "var(--color-P3)",
-          color: "#fff",
+          color: "var(--color-Text-Inverse)" ,
         }}
         onMouseEnter={(e): void => {
           (e.currentTarget as HTMLButtonElement).style.backgroundColor =
