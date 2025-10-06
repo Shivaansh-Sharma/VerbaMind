@@ -21,25 +21,29 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
 
-    try {
-      const data = await apiRequest("/auth/login", "POST", { email, password });
+  interface LoginResponse {
+  accessToken?: string;
+  message?: string;
+}
 
-      if (data?.accessToken) {
-        // Cookies are already set by backend (HttpOnly)
-        window.location.href = "/dashboard";
-      } else {
-        setError(data.message || "Login failed");
-      }
-    } catch (err: unknown) {
+try {
+  const data = await apiRequest<LoginResponse>("/auth/login", "POST", { email, password });
+
+  if (data?.accessToken) {
+    // Cookies are already set by backend (HttpOnly)
+    window.location.href = "/dashboard";
+  } else {
+    setError(data.message || "Login failed");
+  }
+} catch (err: unknown) {
   if (err instanceof Error) {
     console.error(err);
     setError(err.message);
   } else {
     console.error(err);
     setError("Server error");
-  } 
+  }
 }
-  };
 
   const handleGoogleLogin = () => {
     window.location.href = `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/google`;
