@@ -1,5 +1,6 @@
 import Header2 from "@/components/Header2";
 import Text from "@/components/Textbox";
+import Footer from "@/components/footer";
 
 
 
