@@ -53,7 +53,7 @@ export default function Textbox(): ReactElement {
             "var(--color-P3)";
         }}
       >
-      >
+
         Submit
       </button>
 
