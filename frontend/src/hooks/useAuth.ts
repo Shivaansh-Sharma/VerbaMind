@@ -11,7 +11,6 @@ export default function useAuth(requireAuth = true) {
     id: number;
     name: string;
     email: string;
-    password?: string;
     created_at: string;
   }
 
@@ -21,23 +20,18 @@ export default function useAuth(requireAuth = true) {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // prepare headers
+        // Wait until localStorage is ready
+        const token =
+          typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
         const headers: Record<string, string> = {};
+        if (token) headers["Authorization"] = `Bearer ${token}`;
 
-        // include localStorage token if it exists
-        if (typeof window !== "undefined") {
-          const token = localStorage.getItem("token");
-          if (token) {
-            headers["Authorization"] = `Bearer ${token}`;
-          }
-        }
-
-        // call backend /auth/me
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/me`,
           {
             method: "GET",
-            credentials: "include", // include cookies if set
+            credentials: "include",
             headers,
           }
         );
@@ -62,7 +56,9 @@ export default function useAuth(requireAuth = true) {
       }
     };
 
-    checkAuth();
+    // Delay slightly so that localStorage updates finish after login redirect
+    const timeout = setTimeout(checkAuth, 200);
+    return () => clearTimeout(timeout);
   }, [requireAuth, router]);
 
   return { loading, isAuthenticated, user };
