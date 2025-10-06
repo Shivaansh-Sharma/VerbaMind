@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, FormEvent, ChangeEvent } from "react";
 import type { ReactElement } from "react";
 
