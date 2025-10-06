@@ -6,7 +6,21 @@ import { useRouter } from "next/navigation";
 export default function useAuth(requireAuth = true) {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState<any>(null); // store user info
+  // store user info
+  
+  interface User {
+  id: int;
+  name: text;
+  email: text;
+  password: text;
+  created_at: timestamp;
+    
+  // add any other fields your user has
+}
+
+// Then
+const [user, setUser] = useState<User | null>(null);
+  
   const router = useRouter();
 
   useEffect(() => {
