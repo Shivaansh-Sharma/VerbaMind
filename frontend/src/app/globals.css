@@ -1,0 +1,91 @@
+@import "tailwindcss";
+
+/* Theme Variables */
+:root {
+  --color-BG: #f8f8f8;       /* Light BG */
+  --color-Text: #353935;     /* Light text */
+  --color-P1: #00b441;       /* Viper Green */
+  --color-P2: #4169E1;       /* Royal Blue */
+  --color-P3: #0047AB;       /* Cobalt Blue */
+}
+
+/* When `.dark` class is on root (html), override variables */
+.dark {
+  --color-BG: #28282B;        /* Dark BG */
+  --color-Text: #E4E5E7;      /* Dark text */
+  --color-P1: #E1BC6D;        /* Sand Golden */
+  --color-P2: #9966cc;        /* Amethyst */
+  --color-P3: #f4bbff;        /* Electric Lavender */
+}
+
+/* Light Mode (default) */
+html, body {
+  background-color: var(--color-BG);
+  color: var(--color-Text);
+  margin: 0;
+  padding: 0;
+  transition: none;
+}
+
+/* Headers */
+header {
+  background-color: var(--color-BG);
+  color: var(--color-Text);
+}
+
+/* Example classes for buttons or highlights */
+.btn-primary {
+  background-color: var(--color-P1);
+  color: black;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.btn-primary:hover {
+  background-color: var(--color-P2);
+}
+
+.text-stroke {
+  -webkit-text-stroke: 1px black;
+}
+
+/* Enable transitions only when toggling theme */
+html.theme-transition,
+html.theme-transition body,
+html.theme-transition * {
+  transition: background-color 0.35s ease,
+              color 0.35s ease,
+              border-color 0.35s ease;
+}
+
+
+
+/* Global Scrollbar Styling for WebKit browsers */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+  transition: width 0.2s ease, height 0.2s ease;
+}
+
+
+
+::-webkit-scrollbar-track {
+  background: var(--color-BG);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--color-P3);
+  border-radius: 9999px;
+  border: 2px solid var(--color-p2);
+  transition: background-color 0.2s ease, width 0.2s ease, height 0.2s ease;
+}
+
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-P1);
+  width: 14px;   /* enlarge on hover */
+  height: 14px;
+}
+
+
