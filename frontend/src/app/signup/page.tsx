@@ -31,10 +31,15 @@ export default function SignupPage() {
       } else {
         setError(data.message || "Signup failed");
       }
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message || "Server error");
-    }
+    } catch (err: unknown) {
+  if (err instanceof Error) {
+    console.error(err);
+    setError(err.message);
+  } else {
+    console.error(err);
+    setError("Server error");
+  } 
+}
   };
 
   const handleGoogleSignup = () => {
