@@ -8,14 +8,13 @@ export default function useAuth(requireAuth = true) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   // store user info
   
-  interface User {
-  id: int;
-  name: text;
-  email: text;
-  password: text;
-  created_at: timestamp;
-    
-  // add any other fields your user has
+
+interface User {
+  id: number;      // instead of int
+  name: string;    // instead of text
+  email: string;   // instead of text
+  password: string; // instead of text
+  created_at: string;
 }
 
 // Then
