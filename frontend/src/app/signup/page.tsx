@@ -9,6 +9,12 @@ import { Mail } from "lucide-react";
 import useRedirectIfAuth from "@/hooks/useRedirectIfAuth";
 import { apiRequest } from "@/utils/api";
 
+// Define the response type for signup
+interface SignupResponse {
+  accessToken?: string;
+  message?: string;
+}
+
 export default function SignupPage() {
   // Redirect logged-in users to /dashboard
   useRedirectIfAuth();
@@ -23,7 +29,8 @@ export default function SignupPage() {
     setError("");
 
     try {
-      const data = await apiRequest("/auth/signup", "POST", { name, email, password });
+      // Tell TypeScript the response type
+      const data = await apiRequest<SignupResponse>("/auth/signup", "POST", { name, email, password });
 
       if (data?.accessToken) {
         // Cookies are already set by backend
@@ -32,14 +39,14 @@ export default function SignupPage() {
         setError(data.message || "Signup failed");
       }
     } catch (err: unknown) {
-  if (err instanceof Error) {
-    console.error(err);
-    setError(err.message);
-  } else {
-    console.error(err);
-    setError("Server error");
-  } 
-}
+      if (err instanceof Error) {
+        console.error(err);
+        setError(err.message);
+      } else {
+        console.error(err);
+        setError("Server error");
+      }
+    }
   };
 
   const handleGoogleSignup = () => {
