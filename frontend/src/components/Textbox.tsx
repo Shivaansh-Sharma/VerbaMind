@@ -22,6 +22,7 @@ export default function Textbox(): ReactElement {
       style={{
         backgroundColor: "var(--color-BG)",
         color: "var(--color-Text)",
+        border: "1px solid var(--color-P1)",
       }}
     >
       <textarea
