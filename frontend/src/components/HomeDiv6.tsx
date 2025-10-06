@@ -2,7 +2,6 @@
 
 import React from 'react'
 import { motion } from "motion/react";
-import TypingEffect1 from "@/components/HomeDiv3Typing1";
 import TypingEffect2 from "@/components/HomeDiv3Typing2";
 
 
