@@ -39,19 +39,7 @@ export default function Textbox(): ReactElement {
 
       <button
         type="submit"
-        className="self-center px-6 py-2 rounded-xl transition"
-        style={{
-          backgroundColor: "var(--color-P2)",
-          color: "#fff",
-        }}
-        onMouseEnter={(e): void => {
-          (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-            "var(--color-P3)";
-        }}
-        onMouseLeave={(e): void => {
-          (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-            "var(--color-P2)";
-        }}
+        className="self-center px-6 py-2 rounded-xl transition btn-primary"
       >
         Submit
       </button>
