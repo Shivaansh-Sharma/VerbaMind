@@ -1,11 +1,11 @@
 export const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-export const apiRequest = async (
+export const apiRequest = async <T = unknown>(
   endpoint: string,
   method: string = "GET",
-  body?: any,
+  body?: Record<string, unknown>, // ✅ safer than `any`
   auth: boolean = false
-) => {
+): Promise<T> => {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
