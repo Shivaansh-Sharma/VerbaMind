@@ -30,10 +30,15 @@ export default function LoginPage() {
       } else {
         setError(data.message || "Login failed");
       }
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message || "Server error");
-    }
+    } catch (err: unknown) {
+  if (err instanceof Error) {
+    console.error(err);
+    setError(err.message);
+  } else {
+    console.error(err);
+    setError("Server error");
+  } 
+}
   };
 
   const handleGoogleLogin = () => {
