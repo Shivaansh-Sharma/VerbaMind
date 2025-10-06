@@ -2,6 +2,7 @@
 
 import { Github } from "lucide-react";
 import { motion } from "motion/react";
+import Link from 'next/link';
 
 const Footer = () => {
   return (
@@ -26,7 +27,7 @@ const Footer = () => {
           whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }} onHoverStart={() => console.log('hover started!')}
         >
           <Github className="w-5 h-5" />
-          <span>Github Repo</span>
+          <Link href='https://github.com/Shivaansh-Sharma/VerbaMind'><span>Github Repo</span></ Link>
         </motion.a>
       </div>
     </footer>
