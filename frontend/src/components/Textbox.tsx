@@ -1,13 +1,12 @@
-"use client";
 import React, { useState, FormEvent, ChangeEvent } from "react";
+import type { ReactElement } from "react";
 
-export default function Text(): JSX.Element {
+export default function Textbox(): ReactElement {
   const [text, setText] = useState<string>("");
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
     console.log("Submitted text:", text);
-    // your submit logic here
   };
 
   const handleChange = (e: ChangeEvent<HTMLTextAreaElement>): void => {
