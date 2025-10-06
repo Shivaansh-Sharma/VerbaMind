@@ -6,29 +6,39 @@ import { useRouter } from "next/navigation";
 export default function useAuth(requireAuth = true) {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  // store user info
-  
 
-interface User {
-  id: number;      // instead of int
-  name: string;    // instead of text
-  email: string;   // instead of text
-  password: string; // instead of text
-  created_at: string;
-}
+  interface User {
+    id: number;
+    name: string;
+    email: string;
+    password?: string;
+    created_at: string;
+  }
 
-// Then
-const [user, setUser] = useState<User | null>(null);
-  
+  const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        // prepare headers
+        const headers: Record<string, string> = {};
+
+        // include localStorage token if it exists
+        if (typeof window !== "undefined") {
+          const token = localStorage.getItem("token");
+          if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+          }
+        }
+
+        // call backend /auth/me
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/me`,
           {
-            credentials: "include", // important!
+            method: "GET",
+            credentials: "include", // include cookies if set
+            headers,
           }
         );
 
