@@ -9,11 +9,11 @@ const AnalyzerDiv1 = () => {
     <motion.div
       initial={{ scale: 0 }}
       animate={{ scale: 1 }}
-      className="min-h-screen flex justify-center items-center py-10"
+      className="w-full h-screen flex justify-center items-center"
     >
-      <div className="text-center max-w-3xl">
+      <div className="text-center max-w-3xl px-6">
         <h1 className="text-5xl font-bold mb-4">Text Analyzer</h1>
-        <p className="text-xl text-center text-[var(--color-Text)]">
+        <p className="text-xl text-[var(--color-Text)] mb-6">
           Our advanced text analyzer helps you go beyond simple writing checks
           by offering powerful tools to refine your content. It instantly
           measures word count, detects language, and identifies plagiarism while
@@ -21,7 +21,6 @@ const AnalyzerDiv1 = () => {
           ensures clarity, accuracy, and impact, making your writing more
           professional, engaging, and reliable for any purpose.
         </p>
-        <br />
         <TypingEffect1 />
       </div>
     </motion.div>

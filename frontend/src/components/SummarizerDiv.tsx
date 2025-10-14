@@ -9,11 +9,11 @@ const SummarizerDiv1 = () => {
     <motion.div
       initial={{ scale: 0 }}
       animate={{ scale: 1 }}
-      className="min-h-screen flex justify-center items-center py-10"
+      className="w-full h-screen flex justify-center items-center"
     >
-      <div className="text-center max-w-3xl">
+      <div className="text-center max-w-3xl px-6">
         <h1 className="text-5xl font-bold mb-4">Text Summarizer</h1>
-        <p className="text-xl text-center text-[var(--color-Text)]">
+        <p className="text-xl text-[var(--color-Text)] mb-6">
           Our text summarizer transforms lengthy documents, articles, or essays
           into concise, easy-to-understand summaries within seconds. It
           preserves the key points and essential details, ensuring you never
@@ -22,7 +22,6 @@ const SummarizerDiv1 = () => {
           clarity and efficiency, helping you quickly grasp the core message of
           any content.
         </p>
-        <br />
         <TypingEffect2 />
       </div>
     </motion.div>
