@@ -1,7 +1,7 @@
 import Header2 from "@/components/Header2";
 import Text from "@/components/Textbox";
 import Footer from "@/components/footer";
-
+import DashboardDiv1 from "@/components/DashboardDiv1";
 
 
 export default function Analyzer() {
@@ -12,6 +12,7 @@ export default function Analyzer() {
             <br />
       {/* Page Content */}
       <main className="flex-grow">
+        <DashboardDiv1 />
         <Text />
       </main>
 
