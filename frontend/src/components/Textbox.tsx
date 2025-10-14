@@ -18,7 +18,7 @@ export default function Textbox(): ReactElement {
   return (
     <form
       onSubmit={handleSubmit}
-      className="max-w-xl mx-auto p-4 flex flex-col space-y-4 rounded-2xl shadow mb-2"
+      className="max-w-xl mx-auto p-4 flex flex-col space-y-4 rounded-2xl shadow mb-5"
       style={{
         backgroundColor: "var(--color-BG)",
         color: "var(--color-Text)",
