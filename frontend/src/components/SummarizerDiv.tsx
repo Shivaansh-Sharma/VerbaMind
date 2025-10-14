@@ -9,7 +9,7 @@ const SummarizerDiv1 = () => {
     <motion.div
       initial={{ scale: 0 }}
       animate={{ scale: 1 }}
-      className="w-full h-screen flex justify-center items-center"
+      className="w-full min-h-[70vh] flex justify-center items-center py-16"
     >
       <div className="text-center max-w-3xl px-6">
         <h1 className="text-5xl font-bold mb-4">Text Summarizer</h1>
