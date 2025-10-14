@@ -1,7 +1,7 @@
 import Header2 from "@/components/Header2";
 import Text from "@/components/Textbox";
 import Footer from "@/components/footer";
-import HomeDiv5 from "@/components/HomeDiv5";
+import AnalyzerDiv from "@/components/AnalyzerDiv";
 
 
 export default function Analyzer() {
@@ -12,7 +12,7 @@ export default function Analyzer() {
             <br />
       {/* Page Content */}
       <main className="flex-grow">
-        <HomeDiv5 />
+        <AnalyzerDiv />
         <Text />
       </main>
 
