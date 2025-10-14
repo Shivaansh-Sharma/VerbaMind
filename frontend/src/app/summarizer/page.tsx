@@ -1,7 +1,7 @@
 import Header2 from "@/components/Header2";
 import Text from "@/components/Textbox";
 import Footer from "@/components/footer";
-import DashboardDiv2 from "@/components/DashboardDiv2";
+import HomeDiv6 from "@/components/HomeDiv6";
 
 
 export default function Summarizer() {
@@ -12,7 +12,7 @@ export default function Summarizer() {
             <br />
       {/* Page Content */}
       <main className="flex-grow">
-        <DashboardDiv2 />
+        <HomeDiv6 />
         <Text />
       </main>
 
