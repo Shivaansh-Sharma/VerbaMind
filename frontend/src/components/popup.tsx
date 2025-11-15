@@ -55,7 +55,7 @@ export default function HeaderPopup() {
           <Link
             href="/profile"
             onClick={() => setIsOpen(false)}
-            className="block mb-4 text-sm underline underline-offset-2 hover:text-[var(--color-P2)]"
+            className="block mb-4 text-sm hover:text-[var(--color-P2)]"
           >
             User Profile
           </Link>
