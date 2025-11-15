@@ -84,7 +84,7 @@ export default function ProfilePage() {
       <Header2 />
 
       <main className="flex-1 flex flex-col items-center px-4 py-8">
-        <section className="w-full max-w-xl bg-[var(--color-cardBG)] rounded-2xl shadow-md p-6">
+        <section className="w-full max-w-xl bg-[var(--color-BG)] rounded-2xl shadow-md p-6 border-[var(--color-P1)]">
           <h1 className="text-2xl font-bold mb-4">Your Profile</h1>
 
           <div className="space-y-4">
