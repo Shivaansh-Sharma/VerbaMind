@@ -12,7 +12,7 @@ import {
   revokeAllRefreshTokensForUser,
   verifyRefreshTokenHash,
 } from "../models/RefreshToken.js";
-import { findUserByEmail, createUser, findUserById } from "../models/User.js";
+import { findUserByEmail, createUser, findUserById, updateUserName } from "../models/User.js";
 
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 const NODE_ENV = process.env.NODE_ENV || "development";
@@ -248,5 +248,57 @@ export const me = (req, res) => {
     return res.json({ user: decoded, session: false });
   } catch {
     return res.json({ user: null });
+  }
+};
+
+
+/**
+ * Edit Name
+ */
+
+export const updateName = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const { name } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: "Name is required" });
+    }
+
+    const trimmedName = name.trim();
+    const updatedUser = await updateUserName(userId, trimmedName);
+
+    if (!updatedUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // If your access token includes name, re-issue it so frontend gets fresh data
+    const payloadUser = {
+      id: updatedUser.id,
+      email: updatedUser.email,
+      name: updatedUser.name,
+    };
+
+    const accessToken = generateAccessToken(payloadUser);
+
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 15 * 60 * 1000, // adjust to match rest of your app
+    });
+
+    return res.json({
+      user: updatedUser,
+      accessToken,
+      message: "Name updated successfully",
+    });
+  } catch (err) {
+    console.error("Error updating name:", err);
+    return res.status(500).json({ error: "Failed to update name" });
   }
 };

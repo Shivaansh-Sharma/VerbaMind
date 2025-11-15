@@ -61,5 +61,5 @@ export default function useAuth(requireAuth = true) {
     return () => clearTimeout(timeout);
   }, [requireAuth, router]);
 
-  return { loading, isAuthenticated, user };
+  return { loading, isAuthenticated, user, setUser };
 }

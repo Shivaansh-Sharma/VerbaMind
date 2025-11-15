@@ -8,6 +8,7 @@ import {
   logout,
   googleCallbackHandler,
   me,
+  updateName,
 } from "../controllers/authController.js";
 import { authMiddleware } from "../utils/authMiddleware.js";
 
@@ -52,3 +53,6 @@ router.get("/protected", authMiddleware, (req, res) => {
 });
 
 export default router;
+
+// update current user's name
+router.put("/me/name", authMiddleware, updateName);
