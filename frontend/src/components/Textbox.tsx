@@ -15,6 +15,9 @@ export default function Textbox(): ReactElement {
     setText(e.target.value);
   };
 
+  const wordCount = text.trim() === "" ? 0 : text.trim().split(/\s+/).length;
+  const charCount = text.length;
+
   return (
     <form
       onSubmit={handleSubmit}
@@ -25,6 +28,11 @@ export default function Textbox(): ReactElement {
         border: "1px solid var(--color-P1)",
       }}
     >
+      <div className="flex justify-between text-sm opacity-80 px-1">
+        <span>Words: {wordCount}</span>
+        <span>Characters: {charCount}</span>
+      </div>
+
       <textarea
         value={text}
         onChange={handleChange}
@@ -43,7 +51,7 @@ export default function Textbox(): ReactElement {
         className="self-center px-6 py-2 rounded-xl transition btn-primary"
         style={{
           backgroundColor: "var(--color-P3)",
-          color: "var(--color-Text-Inverse)" ,
+          color: "var(--color-Text-Inverse)",
         }}
         onMouseEnter={(e): void => {
           (e.currentTarget as HTMLButtonElement).style.backgroundColor =
@@ -54,10 +62,8 @@ export default function Textbox(): ReactElement {
             "var(--color-P3)";
         }}
       >
-
         Submit
       </button>
-
     </form>
   );
 }
