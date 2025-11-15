@@ -12,6 +12,7 @@ interface UpdateNameResponse {
     id: number;
     name: string;
     email: string;
+    // created_at is on your User type, but not needed in this response
   };
   accessToken?: string;
   message?: string;
@@ -60,16 +61,14 @@ export default function ProfilePage() {
         localStorage.setItem("token", data.accessToken);
       }
 
-      // update user in auth context
+      // update user in auth context, preserving all existing fields (like created_at)
       if (setUser) {
-        setUser((prev) =>
-          prev ? { ...prev, name: data.user.name } : data.user
-        );
+        setUser((prev) => (prev ? { ...prev, name: data.user.name } : prev));
       }
 
       setSuccess(data.message ?? "Name updated successfully");
       setIsEditing(false);
-    } catch (err) {
+    } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message || "Failed to update name");
       } else {
@@ -152,7 +151,9 @@ export default function ProfilePage() {
 
             {/* Messages */}
             {error && <div className="text-sm text-red-500">{error}</div>}
-            {success && <div className="text-sm text-green-500">{success}</div>}
+            {success && (
+              <div className="text-sm text-green-500">{success}</div>
+            )}
           </div>
 
           <div className="pt-4 text-sm opacity-70">
