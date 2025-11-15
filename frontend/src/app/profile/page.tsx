@@ -34,7 +34,7 @@ export default function ProfilePage() {
   if (loading) return <p>Loading...</p>;
   if (!isAuthenticated || !user) return null; // redirect handled in useAuth
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
@@ -62,15 +62,19 @@ export default function ProfilePage() {
 
       // update user in auth context
       if (setUser) {
-        setUser((prev: any) =>
+        setUser((prev) =>
           prev ? { ...prev, name: data.user.name } : data.user
         );
       }
 
       setSuccess(data.message ?? "Name updated successfully");
       setIsEditing(false);
-    } catch (err: any) {
-      setError(err.message ?? "Failed to update name");
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message || "Failed to update name");
+      } else {
+        setError("Failed to update name");
+      }
     } finally {
       setSaving(false);
     }
@@ -147,16 +151,8 @@ export default function ProfilePage() {
             </div>
 
             {/* Messages */}
-            {error && (
-              <div className="text-sm text-red-500">
-                {error}
-              </div>
-            )}
-            {success && (
-              <div className="text-sm text-green-500">
-                {success}
-              </div>
-            )}
+            {error && <div className="text-sm text-red-500">{error}</div>}
+            {success && <div className="text-sm text-green-500">{success}</div>}
           </div>
 
           <div className="pt-4 text-sm opacity-70">
