@@ -1,5 +1,7 @@
 // Verbamind/backend/routes/auth.js
 import express from "express";
+import passport from "passport";
+
 import {
   signup,
   login,
