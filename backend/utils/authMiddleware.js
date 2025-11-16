@@ -2,19 +2,28 @@
 import jwt from "jsonwebtoken";
 
 /**
- * Middleware to check Authorization: Bearer <token> header or accessToken cookie.
+ * Middleware to check accessToken cookie first, then Authorization: Bearer <token> header.
  */
 export const authMiddleware = (req, res, next) => {
   const header = req.headers.authorization;
-  const token = header?.startsWith("Bearer ") ? header.split(" ")[1] : req.cookies?.accessToken;
+  const bearerToken =
+    header && header.startsWith("Bearer ")
+      ? header.split(" ")[1]
+      : null;
 
-  if (!token) return res.status(401).json({ error: "Unauthorized" });
+  // ✅ Prefer cookie token, fallback to header token
+  const token = req.cookies?.accessToken || bearerToken;
+
+  if (!token) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
     next();
   } catch (err) {
+    console.error("Auth error:", err);
     return res.status(401).json({ error: "Invalid or expired token" });
   }
 };
