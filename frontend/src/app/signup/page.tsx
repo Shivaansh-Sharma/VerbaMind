@@ -9,43 +9,91 @@ import { Mail } from "lucide-react";
 import useRedirectIfAuth from "@/hooks/useRedirectIfAuth";
 import { apiRequest } from "@/utils/api";
 
-// Define the response type for signup
 interface SignupResponse {
   accessToken?: string;
   message?: string;
 }
 
+interface SignupOtpResponse {
+  message?: string;
+}
+
 export default function SignupPage() {
-  // Redirect logged-in users to /dashboard
-  useRedirectIfAuth();
+  useRedirectIfAuth(); // redirect if already logged in
+
+  const [step, setStep] = useState<1 | 2>(1);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const [otp, setOtp] = useState("");
+
+  const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setInfo("");
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
 
     try {
-      // Tell TypeScript the response type
-      const data = await apiRequest<SignupResponse>("/auth/signup", "POST", { name, email, password });
+      setLoading(true);
 
-      if (data?.accessToken) {
-        // Cookies are already set by backend
+      const data = await apiRequest<SignupOtpResponse>("/auth/signup/request-otp", "POST", {
+        name,
+        email,
+        password,
+      });
+
+      setInfo(data.message || "OTP sent to your email");
+      setStep(2);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Failed to send OTP");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setInfo("");
+
+    try {
+      setLoading(true);
+
+      const data = await apiRequest<SignupResponse>("/auth/signup/verify-otp", "POST", {
+        email,
+        otp,
+      });
+
+      if (data.accessToken) {
+        // backend also sets HttpOnly cookies
+        localStorage.setItem("token", data.accessToken);
         window.location.href = "/dashboard";
       } else {
         setError(data.message || "Signup failed");
       }
     } catch (err: unknown) {
       if (err instanceof Error) {
-        console.error(err);
         setError(err.message);
       } else {
-        console.error(err);
-        setError("Server error");
+        setError("Failed to verify OTP");
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -65,43 +113,98 @@ export default function SignupPage() {
           className="w-2xl max-w-md"
         >
           <div className="bg-[var(--color-BG)] text-[var(--color-text)] p-8 rounded-lg shadow-md w-full max-w-md border-2">
-            <h2 className="text-2xl font-bold mb-6 text-center">Sign Up</h2>
+            <h2 className="text-2xl font-bold mb-6 text-center">
+              {step === 1 ? "Sign Up" : "Verify Email"}
+            </h2>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <input
-                type="text"
-                placeholder="Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-viper-green"
-              />
-              <input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-viper-green"
-              />
-              <input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-viper-green"
-              />
-              {error && <p className="text-red-500">{error}</p>}
-              <motion.button
-                type="submit"
-                className="w-full py-2 px-4 bg-[var(--color-P1)] text-black hover:bg-[var(--color-P2)] rounded-2xl"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                Sign Up
-              </motion.button>
-            </form>
+            {step === 1 && (
+              <form onSubmit={handleSendOtp} className="space-y-4">
+                <input
+                  type="text"
+                  placeholder="Name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-viper-green"
+                />
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-viper-green"
+                />
+                <input
+                  type="password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-viper-green"
+                />
+                <input
+                  type="password"
+                  placeholder="Confirm Password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-viper-green"
+                />
+
+                {error && <p className="text-red-500">{error}</p>}
+                {info && <p className="text-green-500">{info}</p>}
+
+                <motion.button
+                  type="submit"
+                  className="w-full py-2 px-4 bg-[var(--color-P1)] text-black hover:bg-[var(--color-P2)] rounded-2xl disabled:opacity-70"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  disabled={loading}
+                >
+                  {loading ? "Sending OTP..." : "Send OTP"}
+                </motion.button>
+              </form>
+            )}
+
+            {step === 2 && (
+              <form onSubmit={handleVerifyOtp} className="space-y-4">
+                <p className="text-sm text-gray-400">
+                  We have sent a 6-digit OTP to <span className="font-semibold">{email}</span>.
+                </p>
+                <input
+                  type="text"
+                  placeholder="Enter OTP"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  required
+                  maxLength={6}
+                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-viper-green tracking-[0.4em] text-center"
+                />
+
+                {error && <p className="text-red-500">{error}</p>}
+                {info && <p className="text-green-500">{info}</p>}
+
+                <motion.button
+                  type="submit"
+                  className="w-full py-2 px-4 bg-[var(--color-P1)] text-black hover:bg-[var(--color-P2)] rounded-2xl disabled:opacity-70"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  disabled={loading}
+                >
+                  {loading ? "Verifying..." : "Verify & Sign Up"}
+                </motion.button>
+
+                <button
+                  type="button"
+                  className="w-full text-sm mt-2 underline"
+                  onClick={handleSendOtp}
+                  disabled={loading}
+                >
+                  Resend OTP
+                </button>
+              </form>
+            )}
 
             <div className="mt-4 text-center">
               <motion.button

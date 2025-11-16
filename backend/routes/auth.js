@@ -9,12 +9,18 @@ import {
   googleCallbackHandler,
   me,
   updateName,
+  signupRequestOtp,
+  verifySignupOtp,
 } from "../controllers/authController.js";
 import { authMiddleware } from "../utils/authMiddleware.js";
 
 const router = express.Router();
 
+
 // Local auth
+// Email OTP signup flow
+router.post("/signup/request-otp", signupRequestOtp);
+router.post("/signup/verify-otp", verifySignupOtp);
 router.post("/signup", signup);
 router.post("/login", login);
 router.post("/refresh", refresh);

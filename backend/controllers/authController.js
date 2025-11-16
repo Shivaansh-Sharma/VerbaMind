@@ -13,6 +13,13 @@ import {
   verifyRefreshTokenHash,
 } from "../models/RefreshToken.js";
 import { findUserByEmail, createUser, findUserById, updateUserName } from "../models/User.js";
+import {
+  createEmailVerification,
+  findLatestVerificationByEmail,
+  deleteVerificationById,
+  deleteVerificationsForEmail,
+} from "../models/EmailVerification.js";
+import { sendSignupOtpEmail } from "../utils/mailer.js";
 
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 const NODE_ENV = process.env.NODE_ENV || "development";
@@ -300,5 +307,149 @@ export const updateName = async (req, res) => {
   } catch (err) {
     console.error("Error updating name:", err);
     return res.status(500).json({ error: "Failed to update name" });
+  }
+};
+
+// Step 1: user submits name/email/password -> send OTP
+export const signupRequestOtp = async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: "Name, email and password are required" });
+    }
+
+    const trimmedName = String(name).trim();
+    const trimmedEmail = String(email).trim().toLowerCase();
+
+    if (!trimmedName) {
+      return res.status(400).json({ error: "Name is required" });
+    }
+
+    // Check if a user already exists with this email
+    const existingUser = await findUserByEmail(trimmedEmail);
+    if (existingUser) {
+      return res.status(400).json({ error: "User with this email already exists" });
+    }
+
+    if (String(password).length < 6) {
+      return res.status(400).json({ error: "Password must be at least 6 characters" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Generate a 6-digit OTP
+    const otp = String(Math.floor(100000 + Math.random() * 900000));
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    // Store pending signup + hashed OTP
+    const pending = await createEmailVerification({
+      name: trimmedName,
+      email: trimmedEmail,
+      passwordHash: hashedPassword,
+      otpPlain: otp,
+      expiresAt,
+    });
+
+    console.log("Signup OTP created for", trimmedEmail, "id:", pending.id);
+
+    // Send OTP via email
+    await sendSignupOtpEmail(trimmedEmail, otp);
+
+    return res.json({
+      message: "OTP sent to email. Please verify to complete signup.",
+    });
+  } catch (err) {
+    console.error("Error in signupRequestOtp:", err);
+    return res.status(500).json({ error: "Failed to send OTP" });
+  }
+};
+
+// Step 2: user submits email + OTP -> create user and log them in
+export const verifySignupOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({ error: "Email and OTP are required" });
+    }
+
+    const trimmedEmail = String(email).trim().toLowerCase();
+    const otpString = String(otp).trim();
+
+    const pending = await findLatestVerificationByEmail(trimmedEmail);
+
+    if (!pending) {
+      return res.status(400).json({ error: "No pending signup found for this email" });
+    }
+
+    if (new Date(pending.expires_at).getTime() < Date.now()) {
+      await deleteVerificationById(pending.id);
+      return res.status(400).json({ error: "OTP has expired. Please request a new one." });
+    }
+
+    const otpMatches = await bcrypt.compare(otpString, pending.otp_hash);
+    if (!otpMatches) {
+      return res.status(400).json({ error: "Invalid OTP" });
+    }
+
+    // OTP valid -> create user
+    let user = await createUser(pending.name, pending.email, pending.password_hash);
+
+    // If user already got created somehow (race), fetch it
+    if (!user) {
+      user = await findUserByEmail(trimmedEmail);
+    }
+
+    // Clean up all pending OTPs for this email
+    await deleteVerificationsForEmail(trimmedEmail);
+
+    if (!user) {
+      return res.status(500).json({ error: "Failed to create user" });
+    }
+
+    // Issue tokens (same pattern as login)
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+    const refreshExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+    const storedRefresh = await createRefreshTokenModel(
+      user.id,
+      refreshToken,
+      refreshExpiresAt
+    );
+
+    // Set cookies
+    const isProd = process.env.NODE_ENV === "production";
+
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: "lax",
+      maxAge: 15 * 60 * 1000, // 15 minutes
+    });
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    res.cookie("refreshTokenId", storedRefresh.id, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return res.json({
+      user,
+      accessToken,
+      message: "Signup successful",
+    });
+  } catch (err) {
+    console.error("Error in verifySignupOtp:", err);
+    return res.status(500).json({ error: "Failed to verify OTP" });
   }
 };
