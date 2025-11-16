@@ -7,6 +7,7 @@ import useAuth from "@/hooks/useAuth";
 import { apiRequest } from "@/utils/api";
 
 type ResultType = "analyzer" | "summarizer";
+type FilterType = "all" | ResultType; // ✅ FIX
 
 interface Result {
   id: number;
@@ -39,7 +40,7 @@ export default function ResultsHistoryPage() {
   const { loading: authLoading, isAuthenticated } = useAuth(true);
 
   const [results, setResults] = useState<Result[]>([]);
-  const [filteredType, setFilteredType] = useState<"all" | ResultType>("all");
+  const [filteredType, setFilteredType] = useState<FilterType>("all"); // ✅ FIX
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | "" | null>(null);
@@ -88,7 +89,6 @@ export default function ResultsHistoryPage() {
   }
 
   if (!isAuthenticated) {
-    // Redirect is already handled in useAuth(true)
     return null;
   }
 
@@ -114,17 +114,17 @@ export default function ResultsHistoryPage() {
 
           {/* Filter buttons */}
           <div className="inline-flex rounded-2xl border border-[var(--color-P2)] overflow-hidden text-sm">
-            {(["all", "analyzer", "summarizer"] as const).map((type) => (
+            {(["all", "analyzer", "summarizer"] as FilterType[]).map((type) => ( // ✅ FIXED
               <button
                 key={type}
-                onClick={() => setFilteredType(type as any)}
+                onClick={() => setFilteredType(type)} // ❌ removed "as any" ✔ FIXED
                 className={`px-4 py-2 transition ${
                   filteredType === type
                     ? "bg-[var(--color-P2)] text-[var(--color-Text-Inverse)]"
                     : "bg-transparent text-[var(--color-Text)] hover:bg-[var(--color-P3)]/10"
                 }`}
               >
-                {type === "all" ? "All" : typeLabel[type as ResultType]}
+                {type === "all" ? "All" : typeLabel[type]}
               </button>
             ))}
           </div>
