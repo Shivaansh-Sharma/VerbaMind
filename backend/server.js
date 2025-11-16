@@ -18,6 +18,9 @@ const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 const NODE_ENV = process.env.NODE_ENV || "development";
 const SESSION_SECRET = process.env.SESSION_SECRET || "supersecretchangeinprod";
 
+// 🔥 REQUIRED on Render / any proxy for secure cookies
+app.set("trust proxy", 1);
+
 // CORS allowing credentials for cookies
 app.use(
   cors({
@@ -32,18 +35,19 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
 
-// Session - in production use a store (Redis, DB). MemoryStore is not recommended for production.
+// ⭐ MOST IMPORTANT FIX ⭐
 app.use(
   session({
     name: "sid",
     secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
+    proxy: true,
     cookie: {
       httpOnly: true,
-      secure: NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 24 * 60 * 60 * 1000, // 1 day session cookie
+      secure: NODE_ENV === "production",              
+      sameSite: NODE_ENV === "production" ? "none" : "lax", // 🔥 FIXED
+      maxAge: 24 * 60 * 60 * 1000,
     },
   })
 );
@@ -52,9 +56,13 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
+// Routes
 app.use("/auth", authRoutes);
 
-app.get("/", (req, res) => res.send("🚀 Auth API with JWT + sessions + cookies"));
+app.get("/", (req, res) =>
+  res.send("🚀 Auth API with JWT + sessions + cookies")
+);
+
 app.get("/health", async (req, res) => {
   try {
     await pool.query("SELECT 1");
@@ -66,4 +74,6 @@ app.get("/health", async (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
+app.listen(PORT, () =>
+  console.log(`✅ Server running on port ${PORT}`)
+);
