@@ -1,5 +1,7 @@
 export const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
+type JsonValue = Record<string, unknown> | null;
+
 export const apiRequest = async <T = unknown>(
   endpoint: string,
   method: string = "GET",
@@ -13,6 +15,7 @@ export const apiRequest = async <T = unknown>(
   if (auth) {
     const token =
       typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     }
@@ -26,25 +29,33 @@ export const apiRequest = async <T = unknown>(
       credentials: "include",
     });
 
-    let data: any = null;
+    let data: JsonValue = null;
+
     try {
-      data = await res.json();
+      data = (await res.json()) as JsonValue;
     } catch {
-      // no JSON body
+      data = null;
     }
 
     if (!res.ok) {
       const msg =
-        data?.error ||
-        data?.message ||
+        (data && typeof data === "object" && "error" in data
+          ? String(data.error)
+          : null) ||
+        (data && typeof data === "object" && "message" in data
+          ? String(data.message)
+          : null) ||
         `API request failed with status ${res.status}`;
+
       console.error("API error:", endpoint, res.status, data);
       throw new Error(msg);
     }
 
     return data as T;
-  } catch (err: any) {
-    console.error("Network/API error:", endpoint, err);
-    throw new Error(err?.message || "API request failed");
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "API request failed";
+    console.error("Network/API error:", endpoint, message);
+    throw new Error(message);
   }
 };
