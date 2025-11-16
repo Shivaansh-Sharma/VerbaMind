@@ -2,7 +2,6 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { pool } from "../config/db.js";
-import { Resend } from "resend";
 
 import {
   generateAccessToken,
@@ -24,30 +23,42 @@ import {
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 const NODE_ENV = process.env.NODE_ENV || "development";
 
-/** OTP Via Resend */
-const resend = new Resend(process.env.RESEND_API_KEY);
-
+/** OTP via EmailJS REST API */
 async function sendSignupOtpEmail(to, otp) {
-  const from = process.env.EMAIL_FROM;
+  const serviceId = process.env.EMAILJS_SERVICE_ID;
+  const templateId = process.env.EMAILJS_TEMPLATE_ID;
+  const publicKey = process.env.EMAILJS_PUBLIC_KEY;
 
-  if (!from) {
-    throw new Error("EMAIL_FROM env var is not set");
+  if (!serviceId || !templateId || !publicKey) {
+    throw new Error(
+      "EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID or EMAILJS_PUBLIC_KEY env vars are not set"
+    );
   }
 
-  const { data, error } = await resend.emails.send({
-    from,
-    to,
-    subject: "Your VerbaMind signup OTP",
-    html: `<p>Your OTP is <b>${otp}</b></p>`,
-    text: `Your OTP is ${otp}`,
+  // Node 18+ has global fetch. If you're on an older Node, install & import `node-fetch`.
+  const response = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      service_id: serviceId,
+      template_id: templateId,
+      user_id: publicKey,
+      template_params: {
+        to_email: to, // must match your EmailJS template variable name
+        otp,          // must match {{otp}} in the template
+      },
+    }),
   });
 
-  if (error) {
-    console.error("Resend send error:", error);
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => "");
+    console.error("EmailJS send error:", response.status, errorText);
     throw new Error("Failed to send OTP email");
   }
 
-  console.log("Resend email id:", data?.id);
+  console.log("EmailJS OTP email sent to:", to);
 }
 
 // Helper: set refresh token cookie
