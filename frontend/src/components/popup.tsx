@@ -47,9 +47,13 @@ export default function HeaderPopup() {
           transition={{ duration: 0.2 }}
           className="absolute right-0 mt-2 w-56 bg-[var(--color-BG)] text-[var(--color-Text)] rounded shadow-lg p-4 z-50 border border-[var(--color-P1)]/30"
         >
-          <div className="mb-3 font-semibold text-sm opacity-80">
+          <Link
+            href="/results"
+            onClick={() => setIsOpen(false)}
+            className="block mb-4 text-sm hover:text-[var(--color-P2)]"
+          >
             Result History
-          </div>
+          </Link>
 
           {/* User Profile link */}
           <Link
