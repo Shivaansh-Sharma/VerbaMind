@@ -12,7 +12,11 @@ import {
   updateName,
   signupRequestOtp,
   verifySignupOtp,
+  requestPasswordResetOtp,
+  verifyPasswordResetOtp,
+  updatePasswordAfterOtp,
 } from "../controllers/authController.js";
+
 import { authMiddleware } from "../utils/authMiddleware.js";
 
 const router = express.Router();
@@ -26,6 +30,24 @@ router.post("/signup", signup);
 router.post("/login", login);
 router.post("/refresh", refresh);
 router.post("/logout", logout);
+
+// Password reset for logged-in user (Profile page)
+router.post(
+  "/password/reset/request-otp",
+  authMiddleware,
+  requestPasswordResetOtp
+);
+router.post(
+  "/password/reset/verify-otp",
+  authMiddleware,
+  verifyPasswordResetOtp
+);
+router.post(
+  "/password/reset/update",
+  authMiddleware,
+  updatePasswordAfterOtp
+);
+
 
 // Passport Google - START the OAuth flow
 // This will redirect the browser to Google for login/consent

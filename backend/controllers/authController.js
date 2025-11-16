@@ -18,6 +18,7 @@ import {
   createUser,
   findUserById,
   updateUserName,
+    updateUserPassword,
 } from "../models/User.js";
 
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
@@ -509,5 +510,120 @@ export const verifySignupOtp = async (req, res) => {
   } catch (err) {
     console.error("Error in verifySignupOtp:", err);
     return res.status(500).json({ error: "Failed to verify OTP" });
+  }
+};
+
+// STEP 1: logged-in user requests OTP for password reset
+export const requestPasswordResetOtp = async (req, res) => {
+  try {
+    // req.user is set by authMiddleware (JWT)
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const user = await findUserById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // store minimal info in session for reset flow
+    req.session.passwordReset = {
+      otp,
+      userId: user.id,
+      email: user.email,
+      createdAt: Date.now(),
+    };
+
+    // send OTP via EmailJS (same as signup)
+    await sendSignupOtpEmail(user.email, otp);
+
+    console.log("Password reset OTP created for", user.email, "otp:", otp);
+
+    return res.json({ message: "OTP sent to your email" });
+  } catch (err) {
+    console.error("Error in requestPasswordResetOtp:", err);
+    return res.status(500).json({ error: "Failed to send OTP" });
+  }
+};
+
+// STEP 2: user submits OTP -> verify only
+export const verifyPasswordResetOtp = async (req, res) => {
+  try {
+    const { otp } = req.body;
+
+    if (!otp) {
+      return res.status(400).json({ error: "OTP is required" });
+    }
+
+    const otpString = String(otp).trim();
+
+    const sessionData = req.session.passwordReset;
+    if (!sessionData) {
+      return res.status(400).json({ error: "No password reset request found" });
+    }
+
+    // Optional: 10 minutes expiry
+    const TEN_MINUTES = 10 * 60 * 1000;
+    if (Date.now() - sessionData.createdAt > TEN_MINUTES) {
+      delete req.session.passwordReset;
+      return res.status(400).json({ error: "OTP has expired. Please request again." });
+    }
+
+    if (sessionData.otp !== otpString) {
+      return res.status(400).json({ error: "Invalid OTP" });
+    }
+
+    // Mark OTP as verified in session
+    req.session.passwordResetVerified = true;
+
+    return res.json({ message: "OTP verified. You can now set a new password." });
+  } catch (err) {
+    console.error("Error in verifyPasswordResetOtp:", err);
+    return res.status(500).json({ error: "Failed to verify OTP" });
+  }
+};
+
+// STEP 3: user sends new password + confirm -> update password
+export const updatePasswordAfterOtp = async (req, res) => {
+  try {
+    const { newPassword, confirmNewPassword } = req.body;
+
+    if (!newPassword || !confirmNewPassword) {
+      return res.status(400).json({ error: "New password and confirm password are required" });
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      return res.status(400).json({ error: "Passwords do not match" });
+    }
+
+    if (newPassword.length < 6) {
+      return res
+        .status(400)
+        .json({ error: "Password must be at least 6 characters long" });
+    }
+
+    const sessionData = req.session.passwordReset;
+    if (!sessionData || !req.session.passwordResetVerified) {
+      return res
+        .status(400)
+        .json({ error: "OTP verification is required before changing password" });
+    }
+
+    const userId = sessionData.userId;
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await updateUserPassword(userId, hashedPassword);
+
+    // Clean up session data
+    delete req.session.passwordReset;
+    delete req.session.passwordResetVerified;
+
+    return res.json({ message: "Password updated successfully" });
+  } catch (err) {
+    console.error("Error in updatePasswordAfterOtp:", err);
+    return res.status(500).json({ error: "Failed to update password" });
   }
 };

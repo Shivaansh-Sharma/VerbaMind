@@ -36,3 +36,15 @@ export async function updateUserName(id, name) {
 
   return result.rows[0];
 }
+
+export async function updateUserPassword(id, hashedPassword) {
+  const result = await pool.query(
+    `UPDATE users
+     SET password = $2
+     WHERE id = $1
+     RETURNING id, name, email`,
+    [id, hashedPassword]
+  );
+
+  return result.rows[0];
+}

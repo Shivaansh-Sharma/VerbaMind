@@ -27,6 +27,16 @@ export default function ProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
+  // Password reset via OTP state
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [pwdLoading, setPwdLoading] = useState(false);
+  const [pwdError, setPwdError] = useState<string | null>(null);
+  const [pwdSuccess, setPwdSuccess] = useState<string | null>(null);
+
   // keep local name in sync with user from hook
   useEffect(() => {
     if (user?.name) setName(user.name);
@@ -79,12 +89,111 @@ export default function ProfilePage() {
     }
   };
 
+  // =========================
+  // Password reset handlers
+  // =========================
+
+  const handleSendPasswordOtp = async () => {
+    try {
+      setPwdError(null);
+      setPwdSuccess(null);
+      setPwdLoading(true);
+
+      await apiRequest<{ message: string }>(
+        "/auth/password/reset/request-otp",
+        "POST",
+        {},
+        true
+      );
+
+      setOtpSent(true);
+      setOtpVerified(false);
+      setOtp("");
+      setPwdSuccess("OTP sent to your email.");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setPwdError(err.message || "Failed to send OTP");
+      } else {
+        setPwdError("Failed to send OTP");
+      }
+    } finally {
+      setPwdLoading(false);
+    }
+  };
+
+  const handleVerifyPasswordOtp = async (
+    e: React.FormEvent<HTMLFormElement>
+  ) => {
+    e.preventDefault();
+    try {
+      setPwdError(null);
+      setPwdSuccess(null);
+      setPwdLoading(true);
+
+      await apiRequest<{ message: string }>(
+        "/auth/password/reset/verify-otp",
+        "POST",
+        { otp },
+        true
+      );
+
+      setOtpVerified(true);
+      setPwdSuccess("OTP verified. You can now set a new password.");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setPwdError(err.message || "Failed to verify OTP");
+      } else {
+        setPwdError("Failed to verify OTP");
+      }
+    } finally {
+      setPwdLoading(false);
+    }
+  };
+
+  const handleUpdatePassword = async (
+    e: React.FormEvent<HTMLFormElement>
+  ) => {
+    e.preventDefault();
+    try {
+      setPwdError(null);
+      setPwdSuccess(null);
+      setPwdLoading(true);
+
+      if (newPassword !== confirmNewPassword) {
+        setPwdError("Passwords do not match");
+        return;
+      }
+
+      await apiRequest<{ message: string }>(
+        "/auth/password/reset/update",
+        "POST",
+        { newPassword, confirmNewPassword },
+        true
+      );
+
+      setPwdSuccess("Password updated successfully.");
+      setNewPassword("");
+      setConfirmNewPassword("");
+      setOtp("");
+      setOtpSent(false);
+      setOtpVerified(false);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setPwdError(err.message || "Failed to update password");
+      } else {
+        setPwdError("Failed to update password");
+      }
+    } finally {
+      setPwdLoading(false);
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-[var(--color-BG)] text-[var(--color-Text)]">
       <Header2 />
 
       <main className="flex-1 flex flex-col items-center px-4 py-8">
-<section className="w-full max-w-xl bg-[var(--color-BG)] rounded-2xl shadow-md p-6 border border-[var(--color-P2)]">
+        <section className="w-full max-w-xl bg-[var(--color-BG)] rounded-2xl shadow-md p-6 border border-[var(--color-P2)]">
           <h1 className="text-2xl font-bold mb-4">Your Profile</h1>
 
           <div className="space-y-4">
@@ -149,16 +258,137 @@ export default function ProfilePage() {
               )}
             </div>
 
-            {/* Messages */}
+            {/* Messages for name update */}
             {error && <div className="text-sm text-red-500">{error}</div>}
             {success && (
               <div className="text-sm text-green-500">{success}</div>
             )}
           </div>
 
-          <div className="pt-4 text-sm opacity-70">
-            (In future you can add options here to change password, delete
-            account, etc.)
+          {/* Password Reset via OTP */}
+          <div className="mt-8 border border-[var(--color-P2)] rounded-2xl p-4 bg-[var(--color-cardBG)]/60">
+            <h2 className="text-lg font-semibold mb-2">Reset Password</h2>
+            <p className="text-sm opacity-70 mb-4">
+              You can change your password by verifying an OTP sent to your
+              email address: <span className="font-mono">{user.email}</span>
+            </p>
+
+            {/* Status messages for password reset */}
+            {pwdError && (
+              <p className="text-sm text-red-500 mb-2">{pwdError}</p>
+            )}
+            {pwdSuccess && (
+              <p className="text-sm text-green-500 mb-2">{pwdSuccess}</p>
+            )}
+
+            {/* Step 1: Send OTP button */}
+            {!otpSent && (
+              <button
+                type="button"
+                onClick={handleSendPasswordOtp}
+                disabled={pwdLoading}
+                className="px-4 py-2 rounded-full border border-[var(--color-P2)] hover:bg-[var(--color-P2)] hover:text-black transition text-sm"
+              >
+                {pwdLoading ? "Sending OTP..." : "Send OTP to Email"}
+              </button>
+            )}
+
+            {/* Step 2: Enter OTP */}
+            {otpSent && !otpVerified && (
+              <form
+                onSubmit={handleVerifyPasswordOtp}
+                className="mt-4 space-y-3"
+              >
+                <div>
+                  <label className="block text-sm mb-1">Enter OTP</label>
+                  <input
+                    type="text"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border bg-transparent outline-none"
+                    placeholder="6-digit OTP"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="submit"
+                    disabled={pwdLoading || !otp}
+                    className="px-4 py-2 rounded-full border border-[var(--color-P1)] hover:bg-[var(--color-P1)] hover:text-black transition text-sm"
+                  >
+                    {pwdLoading ? "Verifying..." : "Verify OTP"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleSendPasswordOtp}
+                    disabled={pwdLoading}
+                    className="text-xs underline opacity-80"
+                  >
+                    Resend OTP
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* Step 3: New password form */}
+            {otpVerified && (
+              <form
+                onSubmit={handleUpdatePassword}
+                className="mt-4 space-y-3"
+              >
+                <div>
+                  <label className="block text-sm mb-1">New Password</label>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border bg-transparent outline-none"
+                    placeholder="Enter new password"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm mb-1">
+                    Confirm New Password
+                  </label>
+                  <input
+                    type="password"
+                    value={confirmNewPassword}
+                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border bg-transparent outline-none"
+                    placeholder="Re-enter new password"
+                  />
+                </div>
+
+                <div className="flex gap-2 justify-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOtp("");
+                      setNewPassword("");
+                      setConfirmNewPassword("");
+                      setOtpSent(false);
+                      setOtpVerified(false);
+                      setPwdError(null);
+                      setPwdSuccess(null);
+                    }}
+                    className="px-3 py-2 rounded-full border text-sm hover:bg-[var(--color-cardBG)]"
+                    disabled={pwdLoading}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={
+                      pwdLoading || !newPassword || !confirmNewPassword
+                    }
+                    className="px-4 py-2 rounded-full border border-[var(--color-P1)] hover:bg-[var(--color-P1)] hover:text-black transition text-sm"
+                  >
+                    {pwdLoading ? "Updating..." : "Update Password"}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </section>
       </main>
