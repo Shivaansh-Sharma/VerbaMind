@@ -6,18 +6,19 @@ dotenv.config();
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: Number(process.env.SMTP_PORT) || 587,
-  secure: process.env.SMTP_SECURE === "true", // true for 465, false for 587
+  secure: process.env.SMTP_SECURE === "true", // false for 587
+  requireTLS: true, // important for Gmail on 587
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
+  // optional, but can help debug:
+  // logger: true,
+  // debug: true,
 });
 
-transporter.verify().then(() => {
-  console.log("✅ Nodemailer transporter is ready");
-}).catch((err) => {
-  console.error("❌ Nodemailer verification error:", err);
-});
+// You can delete transporter.verify() completely.
+// It is only for checking config at startup and doesn't fix timeouts.
 
 export async function sendSignupOtpEmail(toEmail, otp) {
   const from = process.env.EMAIL_FROM || process.env.SMTP_USER;
