@@ -28,7 +28,7 @@ async function sendSignupOtpEmail(to, otp) {
   const serviceId = process.env.EMAILJS_SERVICE_ID;
   const templateId = process.env.EMAILJS_TEMPLATE_ID;
   const publicKey = process.env.EMAILJS_PUBLIC_KEY;
-  const privateKey = process.env.EMAILJS_PRIVATE_KEY; // strict mode key
+  const privateKey = process.env.EMAILJS_PRIVATE_KEY; // optional but used if strict mode is on
 
   if (!serviceId || !templateId || !publicKey) {
     throw new Error(
@@ -36,27 +36,27 @@ async function sendSignupOtpEmail(to, otp) {
     );
   }
 
-  if (!privateKey) {
-    throw new Error("EMAILJS_PRIVATE_KEY env var is not set");
+  const payload = {
+    service_id: serviceId,
+    template_id: templateId,
+    user_id: publicKey, // ✅ EmailJS expects PUBLIC key here
+    template_params: {
+      to_email: to, // must match your EmailJS template variable name
+      otp,          // must match {{otp}} in the template
+    },
+  };
+
+  // If "Use Private Key" / strict mode is enabled, include it:
+  if (privateKey) {
+    payload.accessToken = privateKey; // ✅ PRIVATE key goes here
   }
 
   const response = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      // Optional; sometimes recommended:
-      // origin: "http://localhost:3000",
     },
-    body: JSON.stringify({
-      service_id: serviceId,
-      template_id: templateId,
-      // In strict mode, EmailJS expects the PRIVATE key here
-      user_id: privateKey,
-      template_params: {
-        to_email: to, // must match your EmailJS template variable name
-        otp, // must match {{otp}} in the template
-      },
-    }),
+    body: JSON.stringify(payload),
   });
 
   if (!response.ok) {
