@@ -9,8 +9,10 @@ import session from "express-session";
 import passport from "passport";
 import bodyParser from "body-parser";
 import authRoutes from "./routes/auth.js";
+import resultsRoutes from "./routes/results.js";  
 import { pool } from "./config/db.js";
 import "./config/passport.js"; // initialize passport strategies
+
 
 const app = express();
 
@@ -58,6 +60,7 @@ app.use(passport.session());
 
 // Routes
 app.use("/auth", authRoutes);
+app.use("/results", resultsRoutes); // ⬅️ history + create endpoints
 
 app.get("/", (req, res) =>
   res.send("🚀 Auth API with JWT + sessions + cookies")
