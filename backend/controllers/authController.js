@@ -2,7 +2,7 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { pool } from "../config/db.js";
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
 import {
   generateAccessToken,
@@ -24,16 +24,31 @@ import {
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 const NODE_ENV = process.env.NODE_ENV || "development";
 
-/**
- * Nodemailer transporter (Gmail, like your old project)
- */
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+/** OTP Via Resend */
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+async function sendSignupOtpEmail(to, otp) {
+  const from = process.env.EMAIL_FROM;
+
+  if (!from) {
+    throw new Error("EMAIL_FROM env var is not set");
+  }
+
+  const { data, error } = await resend.emails.send({
+    from,
+    to,
+    subject: "Your VerbaMind signup OTP",
+    html: `<p>Your OTP is <b>${otp}</b></p>`,
+    text: `Your OTP is ${otp}`,
+  });
+
+  if (error) {
+    console.error("Resend send error:", error);
+    throw new Error("Failed to send OTP email");
+  }
+
+  console.log("Resend email id:", data?.id);
+}
 
 // Helper: set refresh token cookie
 const setRefreshCookie = (res, token) => {
@@ -63,7 +78,8 @@ export const signup = async (req, res) => {
         .json({ message: "Name, email, and password are required" });
 
     const existing = await findUserByEmail(email);
-    if (existing) return res.status(409).json({ message: "User already exists" });
+    if (existing)
+      return res.status(409).json({ message: "User already exists" });
 
     const hashed = await bcrypt.hash(password, 10);
     const user = await createUser(name, email, hashed);
@@ -110,7 +126,8 @@ export const login = async (req, res) => {
     if (!user) return res.status(401).json({ message: "Invalid credentials" });
 
     const matched = await bcrypt.compare(password, user.password);
-    if (!matched) return res.status(401).json({ message: "Invalid credentials" });
+    if (!matched)
+      return res.status(401).json({ message: "Invalid credentials" });
 
     const payloadUser = { id: user.id, email: user.email, name: user.name };
 
@@ -272,7 +289,8 @@ export const me = (req, res) => {
 
   const token =
     req.cookies?.accessToken ||
-    (req.headers.authorization && req.headers.authorization.split(" ")[1]);
+    (req.headers.authorization &&
+      req.headers.authorization.split(" ")[1]);
   if (!token) return res.json({ user: null });
 
   try {
@@ -333,7 +351,7 @@ export const updateName = async (req, res) => {
 };
 
 /**
- * OTP Signup (Session-based, like NeuroCalm)
+ * OTP Signup (Session-based)
  */
 
 // Step 1: user submits name/email/password -> send OTP
@@ -356,7 +374,9 @@ export const signupRequestOtp = async (req, res) => {
 
     const existingUser = await findUserByEmail(trimmedEmail);
     if (existingUser) {
-      return res.status(400).json({ error: "User with this email already exists" });
+      return res
+        .status(400)
+        .json({ error: "User with this email already exists" });
     }
 
     if (String(password).length < 6) {
@@ -376,15 +396,8 @@ export const signupRequestOtp = async (req, res) => {
       hashedPassword,
     };
 
-    const from = process.env.EMAIL_FROM || process.env.EMAIL_USER;
-
-    await transporter.sendMail({
-      from,
-      to: trimmedEmail,
-      subject: "Your VerbaMind signup OTP",
-      text: `Your OTP is ${otp}`,
-      html: `<p>Your OTP is <b>${otp}</b></p>`,
-    });
+    // send OTP via Resend
+    await sendSignupOtpEmail(trimmedEmail, otp);
 
     console.log("Signup OTP created for", trimmedEmail, "otp:", otp);
 
