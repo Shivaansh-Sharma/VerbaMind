@@ -1,27 +1,33 @@
 // backend/utils/mailer.js
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
+
 dotenv.config();
 
+// ✅ Use the same Gmail-style config you used in the old project
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT) || 587,
-  secure: process.env.SMTP_SECURE === "true", // false for 587
-  requireTLS: true, // important for Gmail on 587
+  service: "gmail",
   auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS, // Use Gmail App Password, NOT normal password
   },
-  // optional, but can help debug:
-  // logger: true,
-  // debug: true,
 });
 
-// You can delete transporter.verify() completely.
-// It is only for checking config at startup and doesn't fix timeouts.
+// Optional: only verify in development to avoid slowing down prod boot
+if (process.env.NODE_ENV !== "production") {
+  transporter
+    .verify()
+    .then(() => {
+      console.log("✅ Nodemailer Gmail transporter is ready");
+    })
+    .catch((err) => {
+      console.error("❌ Nodemailer verification error (dev):", err);
+    });
+}
 
 export async function sendSignupOtpEmail(toEmail, otp) {
-  const from = process.env.EMAIL_FROM || process.env.SMTP_USER;
+  const from =
+    process.env.EMAIL_FROM || process.env.EMAIL_USER || "no-reply@example.com";
 
   const html = `
     <p>Hi,</p>
