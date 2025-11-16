@@ -69,6 +69,49 @@ async function sendSignupOtpEmail(to, otp) {
   console.log("EmailJS OTP email sent to:", to);
 }
 
+/** RESET PASSWORD OTP via EmailJS REST API */
+async function sendPasswordResetOtpEmail(to, otp) {
+  const serviceId = process.env.EMAILJS_SERVICE_ID;
+  const templateId = process.env.EMAILJS_RESET_TEMPLATE_ID; // NEW TEMPLATE ID
+  const publicKey = process.env.EMAILJS_PUBLIC_KEY;
+  const privateKey = process.env.EMAILJS_PRIVATE_KEY;
+
+  if (!serviceId || !templateId || !publicKey) {
+    throw new Error(
+      "EMAILJS_SERVICE_ID, EMAILJS_RESET_TEMPLATE_ID or EMAILJS_PUBLIC_KEY env vars are not set"
+    );
+  }
+
+  const payload = {
+    service_id: serviceId,
+    template_id: templateId,
+    user_id: publicKey,
+    template_params: {
+      email: to, // matches {{email}} in your new template
+      otp: otp,  // matches {{otp}} in your new template
+    },
+  };
+
+  if (privateKey) {
+    payload.accessToken = privateKey;
+  }
+
+  const response = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => "");
+    console.error("EmailJS RESET PASSWORD send error:", response.status, errorText);
+    throw new Error("Failed to send RESET PASSWORD OTP");
+  }
+
+  console.log("EmailJS RESET PASSWORD OTP sent to:", to);
+}
+
+
 // Helper: set refresh token cookie
 const setRefreshCookie = (res, token) => {
   res.cookie("refreshToken", token, {
@@ -516,7 +559,6 @@ export const verifySignupOtp = async (req, res) => {
 // STEP 1: logged-in user requests OTP for password reset
 export const requestPasswordResetOtp = async (req, res) => {
   try {
-    // req.user is set by authMiddleware (JWT)
     const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
@@ -529,7 +571,6 @@ export const requestPasswordResetOtp = async (req, res) => {
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // store minimal info in session for reset flow
     req.session.passwordReset = {
       otp,
       userId: user.id,
@@ -537,8 +578,8 @@ export const requestPasswordResetOtp = async (req, res) => {
       createdAt: Date.now(),
     };
 
-    // send OTP via EmailJS (same as signup)
-    await sendSignupOtpEmail(user.email, otp);
+    // ✅ use RESET PASSWORD template now
+    await sendPasswordResetOtpEmail(user.email, otp);
 
     console.log("Password reset OTP created for", user.email, "otp:", otp);
 
