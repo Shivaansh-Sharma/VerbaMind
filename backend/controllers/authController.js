@@ -41,8 +41,8 @@ async function sendSignupOtpEmail(to, otp) {
     template_id: templateId,
     user_id: publicKey, // ✅ EmailJS expects PUBLIC key here
     template_params: {
-      to_email: to, // must match your EmailJS template variable name
-      otp,          // must match {{otp}} in the template
+      email: to, // must match your EmailJS template variable name
+      passcode: otp,          // must match {{otp}} in the template
     },
   };
 
