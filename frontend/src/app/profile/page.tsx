@@ -266,7 +266,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Password Reset via OTP */}
-          <div className="mt-8 border border-[var(--color-P3)] rounded-2xl p-4 bg-[var(--color-cardBG)]/60">
+          <div className="mt-8 border border-[var(--color-P1)] rounded-2xl p-4 bg-[var(--color-cardBG)]/60">
             <h2 className="text-lg font-semibold mb-2">Reset Password</h2>
             <p className="text-sm opacity-70 mb-4">
               You can change your password by verifying an OTP sent to your
